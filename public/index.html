@@ -1,0 +1,115 @@
+<span
+  id="login"
+  class="g-signin"
+  data-height="short"
+  data-callback="loginToGoogle"
+  data-cookiepolicy="single_host_origin"
+  data-requestvisibleactions="http://schemas.google.com/AddActivity"
+  data-scope="https://www.googleapis.com/auth/plus.login">
+</span>
+<script src="aws-sdk.min.js"></script>
+<script src="amazon-cognito.min.js"></script>
+<script src="jsbn.js"></script>
+<script src="jsbn2.js"></script>
+<script src="sjcl.js"></script>
+<script src="moment.min.js"></script>
+<script src="aws-cognito-sdk.min.js"></script>
+<script src="amazon-cognito-identity.min.js"></script>
+
+
+<script type="text/javascript">
+  var s3 = null;
+  var clientID = '269293258131-ab03bcr5a8rqb5d2p3as25sa4ovu9fp5.apps.googleusercontent.com'; // Google client ID
+  var roleArn = 'arn:aws:iam::132358643655:role/Cognito_fedidentAuth_Role';
+
+  AWS.config.update({region:'us-west-2'});
+
+  
+//   function signinCallback(authResult) {
+//   if (authResult['status']['signed_in']) {
+
+//      // Add the Google access token to the Cognito credentials login map.
+//      AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+//         IdentityPoolId: 'us-west-2:3f125b4a-7458-40ac-b443-18f61c056c51',
+//         Logins: {
+//            'accounts.google.com': authResult['id_token']
+//         }
+//      });
+
+//      // Obtain AWS credentials
+//      AWS.config.credentials.get(function(err){
+//         // Access AWS resources here.
+        
+
+//      });
+//   }
+// }
+
+  document.getElementById('login').setAttribute('data-clientid', clientID);
+  function loginToGoogle(response) {
+    if (!response.error) {
+      AWS.config.credentials = new AWS.WebIdentityCredentials({
+        RoleArn: roleArn, WebIdentityToken: response.id_token
+      });
+
+      console.log('You are now logged in.');
+      console.log(response);
+      // Obtain AWS credentials
+      AWS.config.credentials.get(function(err){
+        // Access AWS resources here.
+        if(err)
+          console.log("Error:  " + err)
+
+        var poolData = {
+          UserPoolId : 'us-west-2_XyG2glnlM',
+          ClientId : '7hgft30n5abmvd6aamc2pvhu33',
+          Paranoia : 7
+        };
+
+        var userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(poolData);
+        
+        var attributeList = [];
+    
+        var dataEmail = {
+            Name : 'email',
+            Value : 'sam@lime-lab.com'
+        };
+        var dataPhoneNumber = {
+            Name : 'phone_number',
+            Value : '+19185274421'
+        };
+        var dataName = {
+          Name: 'name',
+          Value: 'Sam Anderson'
+        }
+        var attributeEmail = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserAttribute(dataEmail);
+        var attributePhoneNumber = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserAttribute(dataPhoneNumber);
+        var attributeName = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserAttribute(dataName);
+
+        attributeList.push(attributeEmail);
+        attributeList.push(attributePhoneNumber);
+        attributeList.push(attributeName);
+
+        userPool.signUp('smandy', 'Password1!', attributeList, null, function(err, result){
+            if (err) {
+                alert(err);
+                return;
+            }
+            cognitoUser = result.user;
+            console.log('user name is ' + cognitoUser.getUsername());
+        });
+
+      });
+
+
+    } else {
+      console.log('There was a problem logging you in.');
+    }
+  }
+
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/client:plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+ </script>
