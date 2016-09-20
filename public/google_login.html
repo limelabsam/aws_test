@@ -1,0 +1,66 @@
+<head>
+  <meta name="google-signin-client_id" content="269293258131-ab03bcr5a8rqb5d2p3as25sa4ovu9fp5.apps.googleusercontent.com">
+  <script src="aws-sdk.min.js"></script>
+  <script src="amazon-cognito.min.js"></script>
+  <script src="jsbn.js"></script>
+  <script src="jsbn2.js"></script>
+  <script src="sjcl.js"></script>
+  <script src="moment.min.js"></script>
+  <script src="aws-cognito-sdk.min.js"></script>
+  <script src="amazon-cognito-identity.min.js"></script>
+
+
+  <script type="text/javascript">
+    var s3 = null;
+    var clientID = '269293258131-ab03bcr5a8rqb5d2p3as25sa4ovu9fp5.apps.googleusercontent.com'; // Google client ID
+    var roleArn = 'arn:aws:iam::132358643655:role/Cognito_fedidentAuth_Role';
+
+    AWS.config.update({region:'us-west-2'});
+
+    function signinCallback(authResult) {
+      console.log(authResult)
+      if (authResult) {
+
+         // Add the Google access token to the Cognito credentials login map.
+         AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+            IdentityPoolId: 'us-west-2:3f125b4a-7458-40ac-b443-18f61c056c51',
+            Logins: {
+               'accounts.google.com': authResult['Zi']['id_token']
+            }
+         });
+
+         // Obtain AWS credentials
+         AWS.config.credentials.get(function(err){
+            // Access AWS resources here.
+            if(err)
+              console.log("Error: " + err)
+            console.log(AWS.config.credentials.data)
+         });
+      }
+    }
+ </script> 
+</head>
+<body>
+  <div id="my-signin2"></div>
+  <script>
+  function onSuccess(googleUser) {
+    console.log('Logged in as: ' + googleUser.getBasicProfile().getName());
+  }
+  function onFailure(error) {
+    console.log(error);
+  }
+  function renderButton() {
+    gapi.signin2.render('my-signin2', {
+      'scope': 'profile email',
+      'width': 240,
+      'height': 50,
+      'longtitle': true,
+      'theme': 'dark',
+      'onsuccess': signinCallback,
+      'onfailure': onFailure
+    });
+  }
+</script>
+
+<script src="https://apis.google.com/js/platform.js?onload=renderButton" async defer></script>
+</body>
